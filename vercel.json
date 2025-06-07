@@ -1,0 +1,19 @@
+{
+  "functions": {
+    "api/**/*.py": {
+      "runtime": "python3.10"
+    }
+  },
+  "builds": [
+    {
+      "src": "api/**/*.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/api/wx_drafts"
+    }
+  ]
+} 

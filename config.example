@@ -1,0 +1,13 @@
+# 微信公众号配置示例
+# 复制此文件为 .env 并填入真实的配置信息
+
+# 微信公众号AppID
+APPID=your_wechat_appid_here
+
+# 微信公众号AppSecret  
+APPSecret=your_wechat_app_secret_here
+
+# 使用说明:
+# 1. 复制此文件为 .env
+# 2. 将上面的占位符替换为真实的微信公众号配置
+# 3. 确保 .env 文件不会被提交到版本控制系统 
