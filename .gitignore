@@ -157,4 +157,11 @@ Desktop.ini
 *.temp
 
 # Log files
-*.log 
+*.log
+
+# 测试文件忽略
+test_api.ipynb
+test_api2.ipynb
+
+# 或者忽略所有test开头的ipynb文件
+# test*.ipynb 
