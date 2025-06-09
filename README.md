@@ -1,3 +1,7 @@
+🚀大模型落地开发实战指南！请关注微信公众号：**「AGI启程号」** 深入浅出，助你轻松入门！
+
+📚 数据分析、深度学习、大模型与算法的综合进阶，尽在CSDN[博客主页](https://blog.csdn.net/qq_33489955?type=blog)
+
 # 微信公众号文章获取API
 
 这是一个基于FastAPI的微信公众号文章获取服务，可以部署到Vercel平台，提供HTTP API接口来获取微信公众号草稿箱中的文章列表。
@@ -25,7 +29,6 @@
 ├── api/
 │   └── wx_drafts.py          # FastAPI应用主文件
 ├── requirements.txt          # Python依赖
-├── vercel.json              # Vercel部署配置
 ├── config.example           # 环境变量示例
 ├── .gitignore               # Git忽略文件
 ├── local_test.py            # 本地测试脚本
