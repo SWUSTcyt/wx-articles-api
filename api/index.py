@@ -135,6 +135,6 @@ def health_check():
     """健康检查端点"""
     return {"status": "healthy", "timestamp": time.time()}
 
-# Vercel需要的handler函数
-def handler(request):
-    return app(request) 
+# 确保兼容Vercel部署
+handler = app
+app_handler = app 
