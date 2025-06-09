@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from mangum import Mangum
 import os
 import time
 
@@ -113,5 +112,5 @@ def get_articles(
         "note": "当前返回模拟数据，环境变量配置正常后将调用真实API"
     }
 
-# 使用Mangum包装FastAPI应用供Vercel使用
-handler = Mangum(app) 
+# 简单导出供Vercel使用
+handler = app 
