@@ -18,11 +18,11 @@ app.add_middleware(
 APPID = os.getenv("APPID")
 SECRET = os.getenv("APPSecret")
 
-if not APPID or not SECRET:
-    raise RuntimeError("请设置环境变量 APPID 和 APPSecret")
-
 def get_access_token():
     """获取微信API访问令牌"""
+    if not APPID or not SECRET:
+        raise HTTPException(status_code=500, detail="环境变量 APPID 或 APPSecret 未设置")
+    
     url = "https://api.weixin.qq.com/cgi-bin/token"
     params = {"grant_type": "client_credential", "appid": APPID, "secret": SECRET}
     try:
@@ -83,7 +83,24 @@ def root():
         "description": "获取微信公众号草稿箱中的文章列表",
         "endpoints": {
             "/articles": "获取草稿箱文章列表",
-            "/health": "健康检查"
+            "/health": "健康检查",
+            "/debug": "调试信息"
+        }
+    }
+
+@app.get("/debug")
+def debug_info():
+    """调试信息端点，检查环境变量状态"""
+    return {
+        "env_check": {
+            "APPID": "已设置" if APPID else "未设置",
+            "APPSecret": "已设置" if SECRET else "未设置",
+            "APPID_length": len(APPID) if APPID else 0,
+            "APPSecret_length": len(SECRET) if SECRET else 0
+        },
+        "system_info": {
+            "platform": os.name,
+            "env_vars_count": len(os.environ)
         }
     }
 
