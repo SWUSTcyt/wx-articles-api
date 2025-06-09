@@ -71,11 +71,7 @@ def get_articles(
 ):
     """获取微信公众号草稿箱文章列表（临时简化版本）"""
     
-    # 临时返回模拟数据，确保API能正常工作
-    if not APPID or not SECRET:
-        raise HTTPException(status_code=500, detail="环境变量 APPID 或 APPSecret 未设置")
-    
-    # 返回模拟数据
+    # 返回模拟数据，无论环境变量是否设置
     mock_articles = [
         {
             "title": "测试文章1",
@@ -101,6 +97,8 @@ def get_articles(
     total = len(mock_articles)
     articles = mock_articles[offset:offset+count]
     
+    env_note = "环境变量已配置，可调用真实API" if APPID and SECRET else "环境变量未配置，返回模拟数据"
+    
     return {
         "success": True,
         "data": articles,
@@ -109,7 +107,8 @@ def get_articles(
             "count": len(articles),
             "total": total
         },
-        "note": "当前返回模拟数据，环境变量配置正常后将调用真实API"
+        "note": f"当前返回模拟数据。{env_note}",
+        "env_configured": bool(APPID and SECRET)
     }
 
 # 简单导出供Vercel使用
