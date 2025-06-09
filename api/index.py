@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 import os
 import time
 import requests
@@ -175,5 +176,5 @@ def get_articles(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"未知错误: {str(e)}")
 
-# Vercel需要的handler
-handler = app 
+# 使用Mangum包装FastAPI应用供Vercel使用
+handler = Mangum(app) 
