@@ -27,7 +27,7 @@
 ```
 微信公众号文章获取/
 ├── api/
-│   └── wx_drafts.py          # FastAPI应用主文件
+│   └── index.py              # FastAPI应用主文件
 ├── requirements.txt          # Python依赖
 ├── config.example           # 环境变量示例
 ├── .gitignore               # Git忽略文件
@@ -67,7 +67,7 @@ pip install -r requirements.txt
 
 运行开发服务器：
 ```bash
-uvicorn api.wx_drafts:app --reload
+uvicorn api.index:app --reload
 ```
 
 访问 `http://localhost:8000` 查看API文档。
@@ -229,7 +229,7 @@ API会返回标准的HTTP状态码：
    - 解决：检查AppID和AppSecret是否正确，网络是否正常
 
 3. **部署失败**
-   - 检查`vercel.json`配置是否正确
+   - 检查项目文件是否完整
    - 确认Python版本兼容性
 
 4. **获取不到文章**

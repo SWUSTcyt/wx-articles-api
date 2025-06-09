@@ -107,7 +107,7 @@ def main():
     
     print("\n" + "=" * 30)
     print("选择测试模式:")
-    print("1. 测试本地API (需要先运行: uvicorn api.wx_drafts:app --reload)")
+    print("1. 测试本地API (需要先运行: uvicorn api.index:app --reload)")
     print("2. 测试远程API (需要提供Vercel部署的URL)")
     print("3. 退出")
     
