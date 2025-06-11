@@ -1,115 +1,90 @@
-from fastapi import FastAPI, Query, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 import os
 import time
+import json
+import requests
+from fastapi import FastAPI, HTTPException
+from dotenv import load_dotenv
 
-# 创建FastAPI应用
-app = FastAPI(title="微信公众号文章获取API", version="1.0.0")
+# 加载本地 .env（生产环境下在 Vercel Dashboard 配置环境变量，无需 .env）
+load_dotenv()
 
-# 添加CORS中间件
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+APPID  = os.getenv("APPID")
+SECRET = os.getenv("APPSecret")
+if not APPID or not SECRET:
+    raise RuntimeError("Missing APPID or APPSecret environment variables")
 
-# 从环境变量读取配置
-APPID = os.environ.get("APPID")
-SECRET = os.environ.get("APPSecret")
+# 进程内简单缓存
+_token = {}
+
+def get_access_token(force: bool = False) -> str:
+    """获取并缓存 access_token；提前 5 分钟失效"""
+    info = _token.get("wx")
+    if info and info["expire_at"] > time.time() and not force:
+        return info["token"]
+
+    resp = requests.get(
+        "https://api.weixin.qq.com/cgi-bin/token",
+        params={
+            "grant_type": "client_credential",
+            "appid": APPID,
+            "secret": SECRET
+        },
+        timeout=10
+    ).json()
+
+    if "access_token" not in resp:
+        raise RuntimeError(f"WX API error: {resp}")
+
+    _token["wx"] = {
+        "token": resp["access_token"],
+        "expire_at": time.time() + resp["expires_in"] - 300
+    }
+    return resp["access_token"]
+
+def _parse_draft(item: dict):
+    """拆分草稿列表中的每篇文章，只保留关键字段"""
+    ts = time.strftime("%Y-%m-%d %H:%M", time.localtime(item["update_time"]))
+    for art in item["content"]["news_item"]:
+        yield {
+            "updated": ts,
+            "title":   art.get("title", ""),
+            "url":     art.get("url", ""),
+            "digest":  art.get("digest", "")
+        }
+
+def list_drafts(offset: int = 0, count: int = 20):
+    """拉取一页草稿并返回 (列表, 总数)"""
+    ak = get_access_token()
+    resp = requests.post(
+        f"https://api.weixin.qq.com/cgi-bin/draft/batchget?access_token={ak}",
+        json={"offset": offset, "count": count},
+        timeout=10
+    )
+    resp.encoding = "utf-8"
+    data = resp.json()
+    if "item" not in data:
+        raise RuntimeError(f"WX API error: {data}")
+
+    rows = []
+    for it in data["item"]:
+        rows.extend(_parse_draft(it))
+    return rows, data["total_count"]
+
+# ------ FastAPI 应用 & 路由 ------
+
+app = FastAPI(title="微信草稿箱 API")
 
 @app.get("/")
-def root():
-    """根路径，返回API信息"""
-    return {
-        "message": "微信公众号文章获取API",
-        "version": "1.0.0", 
-        "description": "获取微信公众号草稿箱中的文章列表",
-        "status": "running",
-        "endpoints": {
-            "/articles": "获取草稿箱文章列表",
-            "/health": "健康检查",
-            "/debug": "调试信息"
-        }
-    }
-
-@app.get("/health")
-def health_check():
-    """健康检查端点"""
-    return {
-        "status": "healthy",
-        "timestamp": time.time(),
-        "env_configured": bool(APPID and SECRET),
-        "message": "API运行正常"
-    }
-
-@app.get("/debug")
-def debug_info():
-    """调试信息端点"""
-    return {
-        "env_status": {
-            "APPID": "已设置" if APPID else "未设置",
-            "APPSecret": "已设置" if SECRET else "未设置",
-            "APPID_length": len(APPID) if APPID else 0,
-            "APPSecret_length": len(SECRET) if SECRET else 0,
-            "APPID_prefix": APPID[:8] + "..." if APPID else None
-        },
-        "system_info": {
-            "platform": os.name,
-            "env_count": len(os.environ),
-            "current_time": time.time()
-        },
-        "api_status": "运行中",
-        "test": "这是一个测试响应"
-    }
-
-@app.get("/articles")
-def get_articles(
-    offset: int = Query(0, ge=0, description="偏移量，从0开始"),
-    count: int = Query(20, ge=1, le=20, description="获取数量，最大20")
-):
-    """获取微信公众号草稿箱文章列表（临时简化版本）"""
-    
-    # 返回模拟数据，无论环境变量是否设置
-    mock_articles = [
-        {
-            "title": "测试文章1",
-            "url": "https://mp.weixin.qq.com/s/test1",
-            "digest": "这是一个测试文章摘要",
-            "created": "2024-01-20 10:00",
-            "author": "测试作者",
-            "thumb_url": "",
-            "content": "这是测试内容..."
-        },
-        {
-            "title": "测试文章2", 
-            "url": "https://mp.weixin.qq.com/s/test2",
-            "digest": "这是另一个测试文章摘要",
-            "created": "2024-01-19 15:30",
-            "author": "测试作者2",
-            "thumb_url": "",
-            "content": "这是另一个测试内容..."
-        }
-    ]
-    
-    # 分页处理
-    total = len(mock_articles)
-    articles = mock_articles[offset:offset+count]
-    
-    env_note = "环境变量已配置，可调用真实API" if APPID and SECRET else "环境变量未配置，返回模拟数据"
-    
-    return {
-        "success": True,
-        "data": articles,
-        "pagination": {
-            "offset": offset,
-            "count": len(articles),
-            "total": total
-        },
-        "note": f"当前返回模拟数据。{env_note}",
-        "env_configured": bool(APPID and SECRET)
-    }
-
-# 简单导出供Vercel使用
-handler = app 
+async def get_drafts(offset: int = 0, count: int = 20):
+    """
+    获取草稿列表
+    - offset: 从第几条开始（默认 0）
+    - count: 本次拉取数量（默认 20）
+    返回 JSON: { items: [...], total_count: N }
+    """
+    try:
+        items, total = list_drafts(offset, count)
+        return {"items": items, "total_count": total}
+    except Exception as e:
+        # 返回 500 并携带错误信息
+        raise HTTPException(status_code=500, detail=str(e))
