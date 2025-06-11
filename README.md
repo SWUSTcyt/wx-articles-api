@@ -84,13 +84,17 @@
 
 ## 四、注意事项与问题处理
 
-### 1. 环境变量
-- 本地开发用 `.env` 文件，线上用 Vercel 环境变量。
-- 缺少 `APPID` 或 `APPSecret` 会启动报错。
+### 1. 微信接口 IP 白名单与 Vercel 出口 IP 获取方法
+- **Vercel 的 Serverless Functions IP 是动态的，官方没有固定出口 IP 列表。**
+- 你可以通过微信接口报错信息中的 IP（如 `34.235.166.164`）临时加入白名单，但这不是长久之计，因为 IP 可能会变。
+- [Vercel 官方说明](https://vercel.com/docs/edge-network/regions#outbound-ip-addresses)：Vercel 不保证 IP 固定，生产环境建议用自有服务器代理。
+- 生产环境推荐：用自己的云服务器做代理，服务器 IP 固定，将其加入白名单，然后由服务器转发请求到 Vercel。
 
-### 2. 依赖问题
+### 2. 依赖与环境变量
 - 只需 `fastapi`、`requests`、`python-dotenv`。
 - 避免多余依赖，确保 requirements.txt 格式正确。
+- 本地开发用 `.env` 文件，线上用 Vercel 环境变量。
+- 缺少 `APPID` 或 `APPSecret` 会启动报错。
 
 ### 3. 路由与入口
 - 只保留 `api/index.py` 作为主入口，vercel.json 路由所有请求到此文件。
