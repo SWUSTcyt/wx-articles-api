@@ -16,18 +16,19 @@ if not APPID or not SECRET:
 # 进程内简单缓存
 _token = {}
 
-def get_access_token(force: bool = False) -> str:
-    """获取并缓存 access_token；提前 5 分钟失效"""
+def getStableAccessToken(force: bool = False) -> str:
+    """获取并缓存稳定的 access_token；提前 5 分钟失效"""
     info = _token.get("wx")
     if info and info["expire_at"] > time.time() and not force:
         return info["token"]
 
-    resp = requests.get(
-        "https://api.weixin.qq.com/cgi-bin/token",
-        params={
+    resp = requests.post(
+        "https://api.weixin.qq.com/cgi-bin/stable_token",
+        json={
             "grant_type": "client_credential",
             "appid": APPID,
-            "secret": SECRET
+            "secret": SECRET,
+            "force_refresh": force
         },
         timeout=10
     ).json()
@@ -54,7 +55,7 @@ def _parse_draft(item: dict):
 
 def list_drafts(offset: int = 0, count: int = 20):
     """拉取一页草稿并返回 (列表, 总数)"""
-    ak = get_access_token()
+    ak = getStableAccessToken()
     resp = requests.post(
         f"https://api.weixin.qq.com/cgi-bin/draft/batchget?access_token={ak}",
         json={"offset": offset, "count": count},
